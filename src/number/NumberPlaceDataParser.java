@@ -8,7 +8,9 @@ import java.io.IOException;
 public class NumberPlaceDataParser {
 
 	private final static int WIDTH_9 = 9;
+	@SuppressWarnings("unused")
 	private final static int WIDTH_16 = 16;
+	@SuppressWarnings("unused")
 	private final static int WIDTH_25 = 25;
 	private final static int[] SUPPORT_WIDTH = {WIDTH_9};
 	

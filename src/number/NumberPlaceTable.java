@@ -1,12 +1,19 @@
 package number;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class NumberPlaceTable {
 	
 	private int width;
+	private int blockWidth;
+	private List<NumberPlaceCell> cellsCache;
 	private NumberPlaceCell[][] numberCells;
 	private Map<String, NumberPlaceBlock> numberBlocks;
 	
@@ -14,29 +21,29 @@ public class NumberPlaceTable {
 		if (width != 9 && width != 16 && width != 25) {
 			throw new IllegalArgumentException();
 		}
-		
 		this.width = width;
+		this.blockWidth = (int)Math.sqrt(width);
+		this.cellsCache = null;
 		numberCells = new NumberPlaceCell[width][width];
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < width; j++) {
 				numberCells[i][j] = new NumberPlaceCell(i, j, width);
 			}
 		}
-		
 		createBlocks();
 	}
 	
 	public NumberPlaceTable(NumberPlaceTable numberTable) {
 		this.width = numberTable.width;
+		this.blockWidth = numberTable.blockWidth;
 		numberCells = new NumberPlaceCell[width][width];
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < width; j++) {
 				numberCells[i][j] = new NumberPlaceCell(i, j, width);
 				numberCells[i][j].setNumber(numberTable.getCell(i, j).getNumber());
-//				numberCells[i][j].disableNumber(numberTable.getCell(i, j).disableNumberList());
+				numberCells[i][j].disableNumber(numberTable.getCell(i, j).disableNumberList());
 			}
 		}
-		
 		createBlocks();
 	}
 	
@@ -61,7 +68,6 @@ public class NumberPlaceTable {
 	}
 	
 	private void checkBlockRowClumn(int blockRow, int blockClumn) {
-		int blockWidth = (int)Math.sqrt(width);
 		if (blockRow < 0 || blockRow >= blockWidth || blockClumn < 0 || blockClumn >= blockWidth) {
 			throw new IllegalArgumentException();
 		}
@@ -84,8 +90,23 @@ public class NumberPlaceTable {
 		return numberCells[row][clumn];
 	}
 	
+	public List<NumberPlaceCell> getCells() {
+		if (cellsCache != null) {
+			return cellsCache;
+		}
+		
+		cellsCache = new ArrayList<NumberPlaceCell>();
+		for (int row = 0; row < width; row++) {
+			for (int clumn = 0; clumn < width; clumn++) {
+				cellsCache.add(getCell(row, clumn));
+			}
+		}
+		return cellsCache;
+	}
+	
+	@Deprecated
 	public void setCell(NumberPlaceCell cell) {
-		numberCells[cell.getPoint().row()][cell.getPoint().clumn()] = cell;
+		numberCells[cell.row()][cell.clumn()] = cell;
 	}
 	
 	public NumberPlaceBlock getBlock(int blockRow, int blockClumn) {
@@ -94,8 +115,102 @@ public class NumberPlaceTable {
 		return numberBlocks.get(key);
 	}
 	
+	public NumberPlaceBlock getBlock(NumberPlaceCell cell) {
+		return numberBlocks.get(Integer.toString(getBlockRow(cell)) + Integer.toString(getBlockClumn(cell)));
+	}
+	
+	public Set<Integer> numberSetRow(NumberPlaceCell cell) {
+		Set<Integer> inputNumbers = new HashSet<Integer>();
+		for (int index = 0; index < width; index++) {
+			if (index != cell.clumn()) {
+				if (getCell(cell.row(), index).isNotBlank()) {
+					inputNumbers.add(getCell(cell.row(), index).getNumber());
+				}
+			}
+		}
+		return inputNumbers;
+	}
+	
+	public Set<Integer> numberSetClumn(NumberPlaceCell cell) {
+		Set<Integer> inputNumbers = new HashSet<Integer>();
+		for (int index = 0; index < width; index++) {
+			if (index != cell.row()) {
+				if (getCell(index, cell.clumn()).isNotBlank()) {
+					inputNumbers.add(getCell(index, cell.clumn()).getNumber());
+				}
+			}
+		}
+		return inputNumbers;
+	}
+	
+	public NumberPlaceCell getHiPriorityCell() {
+		Map<Integer, NumberPlaceCell> hiPriorityMap = new TreeMap<Integer, NumberPlaceCell>();
+		for (NumberPlaceCell cell : getCells()) {
+			if (cell.isBlank()) {
+				hiPriorityMap.put(cell.getEnableNumberCount(), cell);
+			}
+		}
+		return hiPriorityMap.values().iterator().next();
+	}
+	
+	public boolean existContradictCell() {
+		for (int row = 0; row < width; row++) {
+			for (int clumn = 0; clumn < width; clumn++) {
+				if (!getCell(row, clumn).canInputValue()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public boolean existBlankCell() {
+		for (int row = 0; row < width; row++) {
+			for (int clumn = 0; clumn < width; clumn++) {
+				if (getCell(row, clumn).isBlank()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public boolean existSameNumberAtRow(NumberPlaceCell cell, int row) {
+		for (int index = 0; index < width; index++) {
+			if (index != cell.clumn()) {
+				if (getCell(row, index).getNumber() == cell.getNumber()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public boolean existSameNumberAtClumn(NumberPlaceCell cell, int clumn) {
+		for (int index = 0; index < width; index++) {
+			if (index != cell.row()) {
+				if (getCell(index, clumn).getNumber() == cell.getNumber()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
 	public int getWidth() {
 		return width;
+	}
+	
+	public int getBlockWidth() {
+		return blockWidth;
+	}
+	
+	public int getBlockRow(NumberPlaceCell cell) {
+		return cell.row()/blockWidth;
+	}
+	
+	public int getBlockClumn(NumberPlaceCell cell) {
+		return cell.clumn()/blockWidth;
 	}
 	
 	public boolean isBlank(int row, int clumn) {
@@ -104,12 +219,13 @@ public class NumberPlaceTable {
 	}
 	
 	public String toString() {
+		String SEP = System.getProperty("line.separator");
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < width; j++) {
 				sb.append(numberCells[i][j].getNumber());
 			}
-			sb.append(System.lineSeparator());
+			sb.append(SEP);
 		}
 		return sb.toString();
 	}

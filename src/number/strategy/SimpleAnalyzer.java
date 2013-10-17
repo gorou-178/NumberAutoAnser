@@ -2,26 +2,21 @@ package number.strategy;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import number.NumberPlaceAnsableResult;
 import number.NumberPlaceCell;
-import number.NumberPlacePoint;
 import number.NumberPlaceResult;
 import number.NumberPlaceState;
 import number.NumberPlaceTable;
 
 public class SimpleAnalyzer implements NumberPlaceStrategy<List<NumberPlaceTable>> {
 
-	private int tableWidth;
 	private NumberPlaceTable numberTable;
 	private NumberPlaceResult result;
 	
 	public SimpleAnalyzer(NumberPlaceTable numberTable) {
 		this.numberTable = numberTable;
-		this.tableWidth = numberTable.getWidth();
 		this.result = new NumberPlaceResult();
 		this.result.setState(NumberPlaceState.NoAnser);
 	}
@@ -40,10 +35,12 @@ public class SimpleAnalyzer implements NumberPlaceStrategy<List<NumberPlaceTable
 			return;
 		}
 		
+		// 確定している数字をすべて埋める
 		updateCells();
 		
-		// 数値を仮定して解を求める
+		// 完了しているか確認
 		if (!checkFinish()) {
+			// 数値を仮定して解を求める(再帰処理)
 			if (!postulateNumber()) {
 				result.setState(NumberPlaceState.NoAnser);
 				return;
@@ -54,6 +51,13 @@ public class SimpleAnalyzer implements NumberPlaceStrategy<List<NumberPlaceTable
 		}
 	}
 	
+	/**
+	 * 全セルの更新処理
+	 * 1.各セルの入力可能数字を更新
+	 * 2.各セルの入力可能数字が1つだけのセルを埋める
+	 * 3.各セルが属するブロック・行・列に入力されている数字からセルの入力可能数字を割り出して埋める
+	 * 4.1～3が無くなるまで行う
+	 */
 	private void updateCells() {
 		boolean update = true;
 		while(update) {
@@ -64,29 +68,26 @@ public class SimpleAnalyzer implements NumberPlaceStrategy<List<NumberPlaceTable
 		}
 	}
 	
+	/**
+	 * 各セルに入力可能数字を1つずつ仮配置して解を求める(再帰処理)
+	 * 仮配置した結果、エラー(矛盾)が発生した時点で、仮配置まえの状態に戻して、別の入力可能数字を仮配置する
+	 * すべての解を求めるため、解が1つでても処理を止めない
+	 * @return 結果
+	 */
 	private boolean postulateNumber() {
 //		System.out.println("postulateNumber");
 		boolean bResult = false;
+		// 現状をバックアップ
 		NumberPlaceTable backup = new NumberPlaceTable(numberTable);
-		Map<Integer, NumberPlaceCell> blankCellMap = new TreeMap<Integer, NumberPlaceCell>();
-		for (int row = 0; row < tableWidth; row++) {
-			for (int clumn = 0; clumn < tableWidth; clumn++) {
-				if (numberTable.getCell(row, clumn).isBlank()) {
-					blankCellMap.put(numberTable.getCell(row, clumn).enableNumberList().size(), numberTable.getCell(row, clumn));
-				}
-			}
-		}
+		NumberPlaceCell blankCell = numberTable.getHiPriorityCell();
+		int row = blankCell.row();
+		int clumn = blankCell.clumn();
+		List<Integer> enableNumberList = blankCell.enableNumberList();
 		
-		NumberPlaceCell blankCell = blankCellMap.values().iterator().next();
-		Set<Integer> enableNumberList = blankCell.enableNumberList();
-		NumberPlacePoint point = blankCell.getPoint();
-		//再帰処理のため、ここで参照を切っておく
-		blankCellMap = null;
-		blankCell = null;
-		
+		// 配置できる数字をそれぞれ試す
 		for (Integer number : enableNumberList) {
-			System.out.println("["+point.row()+","+point.clumn()+"] に "+number+" を仮配置します");
-			numberTable.getCell(point.row(), point.clumn()).setNumber(number);
+			System.out.println("["+row+","+clumn+"] に "+number+" を仮配置します");
+			numberTable.getCell(row, clumn).setNumber(number);
 			
 			updateCells();
 			
@@ -95,7 +96,7 @@ public class SimpleAnalyzer implements NumberPlaceStrategy<List<NumberPlaceTable
 				numberTable = backup;
 			} else {
 				if (checkFinish()) {
-					System.out.println("★解答が見つかりました");
+					System.out.println("解答が見つかりました");
 					result.addResult(numberTable);
 					if (result.output().size() > 1) {
 						result.setState(NumberPlaceState.ManyAnser);
@@ -105,13 +106,6 @@ public class SimpleAnalyzer implements NumberPlaceStrategy<List<NumberPlaceTable
 					bResult = true;
 				} else {
 					if (postulateNumber()) {
-						System.out.println("★解答が見つかりました");
-						result.addResult(numberTable);
-						if (result.output().size() > 1) {
-							result.setState(NumberPlaceState.ManyAnser);
-						} else if (result.output().size() == 1) {
-							result.setState(NumberPlaceState.OneAnser);
-						}
 						bResult = true;
 					} else {
 						System.out.println("エラーのためロールバックします");
@@ -123,32 +117,13 @@ public class SimpleAnalyzer implements NumberPlaceStrategy<List<NumberPlaceTable
 		return bResult;
 	}
 	
-//	private NumberPlaceCell findBlankCell() {
-//		System.out.println("findBlankCell");
-//		List<NumberPlaceCell> blankCells = new ArrayList<NumberPlaceCell>();
-//		for (int row = 0; row < tableWidth; row++) {
-//			for (int clumn = 0; clumn < tableWidth; clumn++) {
-//				NumberPlaceCell cell = numberTable.getCell(row, clumn);
-//				if (cell.isBlank()) {
-//					blankCells.add(cell);
-//				}
-//			}
-//		}
-//		if (blankCells.isEmpty()) {
-//			return null;
-//		}
-//		return blankCells.get(0);
-//	}
-	
 	private boolean checkError() {
 //		System.out.println("checkError");
 		// 初期入力値が10個未満はエラーにする(解けないらしい)
 		int numCount = 0;
-		for (int row = 0; row < tableWidth; row++) {
-			for (int clumn = 0; clumn < tableWidth; clumn++) {
-				if (numberTable.getCell(row, clumn).isNotBlank()) {
-					numCount++;
-				}
+		for (NumberPlaceCell cell : numberTable.getCells()) {
+			if (cell.isNotBlank()) {
+				numCount++;
 			}
 		}
 		if (numCount < 10) {
@@ -156,61 +131,31 @@ public class SimpleAnalyzer implements NumberPlaceStrategy<List<NumberPlaceTable
 			return true;
 		}
 		
-		for (int row = 0; row < tableWidth; row++) {
-			for (int clumn = 0; clumn < tableWidth; clumn++) {
-				NumberPlaceCell cell = numberTable.getCell(row, clumn);
-				if (cell.isNotBlank()) {
-					
-					// 横方向で数値重複チェック
-					for (int index = 0; index < tableWidth; index++) {
-						if (index != clumn) {
-							if (numberTable.getCell(row, index).getNumber() == cell.getNumber()) {
-								System.out.println(row + "行でエラー: ["+row+","+index+"] と ["+row+","+clumn+"] の値が重複したためエラー");
-								return true;
-							}
-						}
-					}
-					
-					// 縦方向で数値重複チェック
-					for (int index = 0; index < tableWidth; index++) {
-						if (index != row) {
-							if (numberTable.getCell(index, clumn).getNumber() == cell.getNumber()) {
-								System.out.println(clumn + "列でエラー: ["+index+","+clumn+"] と ["+row+","+clumn+"] の値が重複したためエラー");
-								return true;
-							}
-						}
-					}
-					
-					// ブロック内で数値重複チェック
-					int startRow = calcStartRow(row);
-					int endRow = calcEndRow(row);
-					int startClumn = calcStartClumn(clumn);
-					int endClumn = calcEndClumn(clumn);
-					for (int blockRow = startRow; blockRow <= endRow; blockRow++) {
-						for (int blockClumn = startClumn; blockClumn <= endClumn; blockClumn++) {
-							if ((row != blockRow) || (clumn != blockClumn)) {
-								if (numberTable.getCell(blockRow, blockClumn).isNotBlank()) {
-									if (numberTable.getCell(blockRow, blockClumn).getNumber() == cell.getNumber()) {
-										System.out.println("{"+startRow+","+startClumn+"}ブロックエラー: ["+blockRow+","+blockClumn+"] と ["+row+","+clumn+"] の値が重複したためエラー");
-										return true;
-									}
-								}
-							}
-						}
-					}
+		for (NumberPlaceCell cell : numberTable.getCells()) {
+			if (cell.isNotBlank()) {
+				// 横方向で数値重複チェック
+				if (numberTable.existSameNumberAtRow(cell, cell.row())) {
+					System.out.println(cell.row() + "行で重複エラー");
+					return true;
+				}
+				
+				// 縦方向で数値重複チェック
+				if (numberTable.existSameNumberAtClumn(cell, cell.clumn())) {
+					System.out.println(cell.clumn() + "列で重複エラー");
+					return true;
+				}
+				
+				// ブロック内で数値重複チェック
+				if (numberTable.getBlock(cell).existSameNumber(cell)) {
+					System.out.println("{"+numberTable.getBlockRow(cell)+","+numberTable.getBlockClumn(cell)+"}ブロック内の重複エラー");
+					return true;
 				}
 			}
 		}
 		
 		// 未入力かつ入力可能な数値がないセルのチェック
-		for (int row = 0; row < tableWidth; row++) {
-			for (int clumn = 0; clumn < tableWidth; clumn++) {
-				NumberPlaceCell cell = numberTable.getCell(row, clumn);
-				if (cell.isBlank() && (cell.enableNumberList().size() == 0)) {
-					System.out.println("矛盾エラー: ["+row+","+clumn+"] に対して入力可能な数値がありません");
-					return true;
-				}
-			}
+		if (numberTable.existContradictCell()) {
+			System.out.println("未入力セルに対して入力可能な数値がない矛盾エラー");
 		}
 		
 		return false;
@@ -218,62 +163,21 @@ public class SimpleAnalyzer implements NumberPlaceStrategy<List<NumberPlaceTable
 	
 	private boolean checkFinish() {
 //		System.out.println("checkFinish");
-		for (int row = 0; row < tableWidth; row++) {
-			for (int clumn = 0; clumn < tableWidth; clumn++) {
-				if (numberTable.getCell(row, clumn).isBlank()) {
-					return false;
-				}
-			}
-		}
-		return true;
+		return !numberTable.existBlankCell();
 	}
 	
 	private void checkEnableNumber() {
 //		System.out.println("checkEnableNumber");
-		for (int row = 0; row < tableWidth; row++) {
-			for (int clumn = 0; clumn < tableWidth; clumn++) {
-				NumberPlaceCell cell = numberTable.getCell(row, clumn);
-				if (cell.isBlank()) {
-					
-					// セルが属するブロックが利用している数字からセルの入力可能な数字を絞り込む
-					int startRow = calcStartRow(row);
-					int endRow = calcEndRow(row);
-					int startClumn = calcStartClumn(clumn);
-					int endClumn = calcEndClumn(clumn);
-					Set<Integer> inputNumbers = new HashSet<Integer>();
-					for (int blockRow = startRow; blockRow <= endRow; blockRow++) {
-						for (int blockClumn = startClumn; blockClumn <= endClumn; blockClumn++) {
-							if (numberTable.getCell(blockRow, blockClumn).isNotBlank()) {
-								inputNumbers.add(numberTable.getCell(blockRow, blockClumn).getNumber());
-							}
-						}
-					}
-					cell.disableNumber(inputNumbers);
-					
-					
-					// 横方向で利用している数字からセルの入力可能な数字を絞り込む
-					inputNumbers = new HashSet<Integer>();
-					for (int index = 0; index < tableWidth; index++) {
-						if (index != clumn) {
-							if (numberTable.getCell(row, index).isNotBlank()) {
-								inputNumbers.add(numberTable.getCell(row, index).getNumber());
-							}
-						}
-					}
-					cell.disableNumber(inputNumbers);
-					
-					
-					// 縦方向で利用している数字からセルの入力可能な数字を絞り込む
-					inputNumbers = new HashSet<Integer>();
-					for (int index = 0; index < tableWidth; index++) {
-						if (index != row) {
-							if (numberTable.getCell(index, clumn).isNotBlank()) {
-								inputNumbers.add(numberTable.getCell(index, clumn).getNumber());
-							}
-						}
-					}
-					cell.disableNumber(inputNumbers);
-				}
+		for (NumberPlaceCell cell : numberTable.getCells()) {
+			if (cell.isBlank()) {
+				// セルが属するブロックが利用している数字からセルの入力可能な数字を絞り込む
+				cell.disableNumber(numberTable.getBlock(cell).numberSet(cell));
+				
+				// 横方向で利用している数字からセルの入力可能な数字を絞り込む
+				cell.disableNumber(numberTable.numberSetRow(cell));
+				
+				// 縦方向で利用している数字からセルの入力可能な数字を絞り込む
+				cell.disableNumber(numberTable.numberSetClumn(cell));
 			}
 		}
 	}
@@ -281,17 +185,13 @@ public class SimpleAnalyzer implements NumberPlaceStrategy<List<NumberPlaceTable
 	private boolean searchInputOnlyValue() {
 //		System.out.println("searchInputOnlyValue");
 		boolean bResult = false;
-		for (int row = 0; row < tableWidth; row++) {
-			for (int clumn = 0; clumn < tableWidth; clumn++) {
-				NumberPlaceCell cell = numberTable.getCell(row, clumn);
-				if (cell.isBlank()) {
-					Set<Integer> numberSet = cell.enableNumberList();
-					if (numberSet.size() == 1) {
-						int number = numberSet.iterator().next();
-						System.out.println("["+row+","+clumn+"] に  "+number+" を配置(OnlyValue)");
-						numberTable.setNumber(row, clumn, number);
-						bResult = true;
-					}
+		for (NumberPlaceCell cell : numberTable.getCells()) {
+			if (cell.isBlank()) {
+				if (cell.getEnableNumberCount() == 1) {
+					int number = cell.enableNumberList().get(0);
+					System.out.println("["+cell.row()+","+cell.clumn()+"] に "+number+" を配置(OnlyValue)");
+					numberTable.setNumber(cell.row(), cell.clumn(), number);
+					bResult = true;
 				}
 			}
 		}
@@ -301,76 +201,30 @@ public class SimpleAnalyzer implements NumberPlaceStrategy<List<NumberPlaceTable
 	private boolean searchCanInputOnlyValue() {
 //		System.out.println("searchCanInputOnlyValue");
 		boolean bResult = false;
-		for (int row = 0; row < tableWidth; row++) {
-			for (int clumn = 0; clumn < tableWidth; clumn++) {
-				NumberPlaceCell cell = numberTable.getCell(row, clumn);
-				if (cell.isBlank()) {
-					
-					// 横方向で数値重複チェック
-					Set<Integer> inputNumbers = new HashSet<Integer>();
-					for (int index = 0; index < tableWidth; index++) {
-						if (index != clumn) {
-							NumberPlaceCell rowCell = numberTable.getCell(row, index);
-							if (rowCell.isNotBlank()) {
-								inputNumbers.add(rowCell.getNumber());
-							}
-						}
-					}
-					
-					// 縦方向で数値重複チェック
-					for (int index = 0; index < tableWidth; index++) {
-						if (index != row) {
-							NumberPlaceCell clumnCell = numberTable.getCell(index, clumn);
-							if (clumnCell.isNotBlank()) {
-								inputNumbers.add(clumnCell.getNumber());
-							}
-						}
-					}
-					
-					// ブロック内で数値重複チェック
-					int startRow = calcStartRow(row);
-					int endRow = calcEndRow(row);
-					int startClumn = calcStartClumn(clumn);
-					int endClumn = calcEndClumn(clumn);
-					for (int blockRow = startRow; blockRow <= endRow; blockRow++) {
-						for (int blockClumn = startClumn; blockClumn <= endClumn; blockClumn++) {
-							if ((row != blockRow) || (clumn != blockClumn)) {
-								NumberPlaceCell blockCell = numberTable.getCell(blockRow, blockClumn);
-								if (blockCell.isNotBlank()) {
-									inputNumbers.add(blockCell.getNumber());
-								}
-							}
-						}
-					}
-					
-					cell.disableNumber(inputNumbers);
-					Set<Integer> numberSet = cell.enableNumberList();
-					if (numberSet.size() == 1) {
-						int number = numberSet.iterator().next();
-						System.out.println("["+row+","+clumn+"] に  "+number+" を配置(CanOnlyValue)");
-						cell.setNumber(number);
-						bResult = true;
-					}
+		for (NumberPlaceCell cell : numberTable.getCells()) {
+			if (cell.isBlank()) {
+				// 横方向に入力されている数字を集計
+				Set<Integer> inputNumbers = new HashSet<Integer>();
+				inputNumbers.addAll(numberTable.numberSetRow(cell));
+				
+				// 縦方向に入力されている数字を集計
+				inputNumbers.addAll(numberTable.numberSetClumn(cell));
+				
+				// ブロック内で入力されている数字を集計
+				inputNumbers.addAll(numberTable.getBlock(cell).numberSet(cell));
+				
+				// 入力されている数字をすべて無効にする
+				cell.disableNumber(inputNumbers);
+				
+				// 入力可能な数字が1つの場合
+				if (cell.canInputOnlyValue()) {
+					int number = cell.enableNumberList().get(0);
+					System.out.println("["+cell.row()+","+cell.clumn()+"] に "+number+" を配置(CanOnlyValue)");
+					cell.setNumber(number);
+					bResult = true;
 				}
 			}
 		}
 		return bResult;
 	}
-	
-	public int calcStartClumn(int clumn) {
-		return ((clumn - (clumn % 3)) / 3) * 3;
-	}
-
-	public int calcEndClumn(int clumn) {
-		return ((clumn - (clumn % 3)) / 3) * 3 + 2;
-	}
-
-	public int calcStartRow(int row) {
-		return ((row - (row % 3)) / 3) * 3;
-	}
-
-	public int calcEndRow(int row) {
-		return ((row - (row % 3)) / 3) * 3 + 2;
-	}
-	
 }

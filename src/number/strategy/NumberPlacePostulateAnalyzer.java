@@ -49,19 +49,19 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 //				
 ////				// おける数字が無いということは、矛盾しているため解析を終了させる
 ////				if (enableNumberList.isEmpty()) {
-////					System.out.println(this.name + " >> おける数値が無いため矛盾になりました: [" + cell.getPoint().row() + ", " + cell.getPoint().clumn() + "]");
+////					System.out.println(this.name + " >> おける数値が無いため矛盾になりました: [" + cell.row() + ", " + cell.clumn() + "]");
 ////					throw new ContradictException();
 ////				}
 //				
 //				// 数字が確定している場合
 //				if (enableNumberList.size() == 1) {
 //					if (!cell.isEnable(enableNumberList.get(0))) {
-//						System.out.println(this.name + " >> 数値が矛盾しています: [" + cell.getPoint().row() + ", " + cell.getPoint().clumn() + "]");
+//						System.out.println(this.name + " >> 数値が矛盾しています: [" + cell.row() + ", " + cell.clumn() + "]");
 //						throw new ContradictException();
 //					}
-//					System.out.println(this.name + " >> [" + cell.getPoint().row() + "," + cell.getPoint().clumn() + "] に " + enableNumberList.get(0) + " を配置しました");
-//					numberTable.setNumber(cell.getPoint().row(), cell.getPoint().clumn(), enableNumberList.get(0));
-//					updateEnableNumber(cell.getPoint().row(), cell.getPoint().clumn());
+//					System.out.println(this.name + " >> [" + cell.row() + "," + cell.clumn() + "] に " + enableNumberList.get(0) + " を配置しました");
+//					numberTable.setNumber(cell.row(), cell.clumn(), enableNumberList.get(0));
+//					updateEnableNumber(cell.row(), cell.clumn());
 //					update = true;
 //				} else {
 //					for (int j = 0; j < enableNumberList.size(); j++) {
@@ -70,9 +70,9 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 //						boolean disableClumn = checkDisableNumberClumn(cell, number);
 //						boolean disableBlock = checkDisableNumberBlock(cell, number);
 //						if (disableRow && disableClumn && disableBlock) {
-//							System.out.println(this.name + " >> [" + cell.getPoint().row() + "," + cell.getPoint().clumn() + "] に " + number + " を配置しました");
-//							numberTable.setNumber(cell.getPoint().row(), cell.getPoint().clumn(), number);
-//							updateEnableNumber(cell.getPoint().row(), cell.getPoint().clumn());
+//							System.out.println(this.name + " >> [" + cell.row() + "," + cell.clumn() + "] に " + number + " を配置しました");
+//							numberTable.setNumber(cell.row(), cell.clumn(), number);
+//							updateEnableNumber(cell.row(), cell.clumn());
 //							continue;
 //						}
 //					}
@@ -119,7 +119,7 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 //				
 //				// おける数字が無いということは、矛盾しているため解析を終了させる
 //				if (enableNumberList.isEmpty()) {
-//					System.out.println(this.name + " >> おける数値が無いため矛盾になりました: [" + cell.getPoint().row() + ", " + cell.getPoint().clumn() + "]");
+//					System.out.println(this.name + " >> おける数値が無いため矛盾になりました: [" + cell.row() + ", " + cell.clumn() + "]");
 //					throw new ContradictException();
 //				}
 //				
@@ -128,9 +128,9 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 //					if (!cell.isEnable(enableNumberList.get(0))) {
 //						return false;
 //					}
-//					System.out.println(this.name + " >> [" + cell.getPoint().row() + "," + cell.getPoint().clumn() + "] に " + enableNumberList.get(0) + " を配置しました(解法1)");
-//					numberTable.setNumber(cell.getPoint().row(), cell.getPoint().clumn(), enableNumberList.get(0));
-//					updateEnableNumber(cell.getPoint().row(), cell.getPoint().clumn());
+//					System.out.println(this.name + " >> [" + cell.row() + "," + cell.clumn() + "] に " + enableNumberList.get(0) + " を配置しました(解法1)");
+//					numberTable.setNumber(cell.row(), cell.clumn(), enableNumberList.get(0));
+//					updateEnableNumber(cell.row(), cell.clumn());
 //				} else {
 //					for (int j = 0; j < enableNumberList.size(); j++) {
 //						Integer number = enableNumberList.get(j);
@@ -138,9 +138,9 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 //							continue;
 //						}
 //						NumberPlaceTable oldTable = new NumberPlaceTable(numberTable);
-//						System.out.println(this.name + " >> [" + cell.getPoint().row() + ", " + cell.getPoint().clumn() + "] に " + number + "を仮配置します");
-//						numberTable.setNumber(cell.getPoint().row(), cell.getPoint().clumn(), number);
-//						updateEnableNumber(cell.getPoint().row(), cell.getPoint().clumn());
+//						System.out.println(this.name + " >> [" + cell.row() + ", " + cell.clumn() + "] に " + number + "を仮配置します");
+//						numberTable.setNumber(cell.row(), cell.clumn(), number);
+//						updateEnableNumber(cell.row(), cell.clumn());
 //						Worker worker = new Worker(this.name, numberTable);
 //						try {
 //							NumberPlaceResult workerResult = worker.work(false);
@@ -159,7 +159,7 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 //							}
 //						} catch (ContradictException e) {
 //							// 矛盾が発生した場合はテーブルを借り配置前の状態に戻す
-//							System.out.println(this.name + " >> 矛盾が発生しました: [" + cell.getPoint().row() + ", " + cell.getPoint().clumn() + "]");
+//							System.out.println(this.name + " >> 矛盾が発生しました: [" + cell.row() + ", " + cell.clumn() + "]");
 //							numberTable = oldTable;
 //						}
 //					}
@@ -428,7 +428,7 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 		}
 		
 		if (inputCount == 1) {
-			System.out.println("["+cell.getPoint().row()+","+cell.getPoint().clumn()+"] に "+number+" を配置");
+			System.out.println("["+cell.row()+","+cell.clumn()+"] に "+number+" を配置");
 			cell.setNumber(number);
 			bResult = true;
 		}
@@ -445,7 +445,7 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 	
 	private boolean checkNumberPositionRow(NumberPlaceCell cell, Integer number) {
 		for (int i = 0; i < numberTable.getWidth(); i++) {
-			if (numberTable.getCell(cell.getPoint().row(), i).getNumber() == number) {
+			if (numberTable.getCell(cell.row(), i).getNumber() == number) {
 				return false;
 			}
 		}
@@ -454,7 +454,7 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 	
 	private boolean checkNumberPositionClumn(NumberPlaceCell cell, Integer number) {
 		for (int i = 0; i < numberTable.getWidth(); i++) {
-			if (numberTable.getCell(i, cell.getPoint().clumn()).getNumber() == number) {
+			if (numberTable.getCell(i, cell.clumn()).getNumber() == number) {
 				return false;
 			}
 		}
@@ -462,8 +462,8 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 	}
 	
 	private boolean checkNumberPositionGroup(NumberPlaceCell cell, Integer number) {
-		int row = cell.getPoint().row();
-		int clumn = cell.getPoint().clumn();
+		int row = cell.row();
+		int clumn = cell.clumn();
 		int startRow = calcStartRow(row);
 		int endRow = calcEndRow(row);
 		int startClumn = calcStartClumn(clumn);
@@ -481,8 +481,8 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 	private boolean checkNumberPositionAll(NumberPlaceCell cell, Integer number) {
 		int width = numberTable.getWidth();
 		int blockWidth = (int)Math.sqrt(width);
-		int row = cell.getPoint().row();
-		int clumn = cell.getPoint().clumn();
+		int row = cell.row();
+		int clumn = cell.clumn();
 		
 		if (cell.isNotBlank()) {
 			return false;
@@ -545,7 +545,7 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 					Set<Integer> enableNumberList = enableNumberList(cell);
 					if (enableNumberList.size() == 1) {
 						Integer number = enableNumberList.iterator().next();
-						System.out.println("[" + cell.getPoint().row() + "," + cell.getPoint().clumn() + "] に " + number + " を配置しました(OnlyNumber)");
+						System.out.println("[" + cell.row() + "," + cell.clumn() + "] に " + number + " を配置しました(OnlyNumber)");
 						cell.setNumber(number);
 						bResult = true;
 					}
@@ -564,13 +564,13 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 		}
 		
 		for (Integer number : cellEnableList) {
-			System.out.println("[" + cell.getPoint().row() + "," + cell.getPoint().clumn() + "] に " + number + " を配置しました(CanInputOnly)");
+			System.out.println("[" + cell.row() + "," + cell.clumn() + "] に " + number + " を配置しました(CanInputOnly)");
 			cell.setNumber(number);
 			update = true;
 		}
 //			if (cellEnableList.size() == 1 && enableList.size() == 1) {
 //				if (cellEnableList.contains(i) && enableList.contains(i)) {
-//					System.out.println("[" + cell.getPoint().row() + "," + cell.getPoint().clumn() + "] に " + i + " を配置しました(CanInputOnly)");
+//					System.out.println("[" + cell.row() + "," + cell.clumn() + "] に " + i + " を配置しました(CanInputOnly)");
 //					cell.setNumber(i);
 //					update = true;
 //				}
@@ -642,7 +642,7 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 //					}
 //					if (cell.disableNumber(numberSet)) {
 //						if (cell.enableNumberList().size() == 1) {
-//							System.out.println("[" + cell.getPoint().row() + "," + cell.getPoint().clumn() + "] に " + cell.enableNumberList().get(0) + " を配置しました(LineClumn)");
+//							System.out.println("[" + cell.row() + "," + cell.clumn() + "] に " + cell.enableNumberList().get(0) + " を配置しました(LineClumn)");
 //							cell.disableNumber(cell.enableNumberList().get(0));
 //							cell.setNumber(cell.enableNumberList().get(0));
 //						}
@@ -652,7 +652,7 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 //					numberSet = new HashSet<Integer>();
 //					if (numberTable.getBlock(i/blockWidth, j/blockWidth).updateEnableNumber()) {
 //						if (cell.enableNumberList().size() == 1) {
-//							System.out.println("[" + cell.getPoint().row() + "," + cell.getPoint().clumn() + "] に " + cell.enableNumberList().get(0) + " を配置しました(Block)");
+//							System.out.println("[" + cell.row() + "," + cell.clumn() + "] に " + cell.enableNumberList().get(0) + " を配置しました(Block)");
 //							cell.disableNumber(cell.enableNumberList().get(0));
 //							cell.setNumber(cell.enableNumberList().get(0));
 //						}
@@ -754,7 +754,7 @@ public class NumberPlacePostulateAnalyzer implements NumberPlaceStrategy<List<Nu
 		List<NumberPlaceCell> blankCells = findBlankCell();
 		NumberPlaceCell cell = blankCells.get(0);
 		for (Integer number : enableNumberList(cell)) {
-			System.out.println("[" + cell.getPoint().row() + ", " + cell.getPoint().clumn() + "] に " + number + "を仮配置します");
+			System.out.println("[" + cell.row() + ", " + cell.clumn() + "] に " + number + "を仮配置します");
 			cell.setNumber(number);
 			boolean update = true;
 			while(update) {
